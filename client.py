@@ -41,4 +41,5 @@ ws = f"ws://{url}:{port}?room={password_encrypted}&session={session}&login={logi
 
 print("Generated ws URL:", ws)
 
-asyncio.get_event_loop().run_until_complete(connect_and_send(ws))
+#asyncio.get_event_loop().run_until_complete(connect_and_send(ws))
+asyncio.run(connect_and_listen(ws))
