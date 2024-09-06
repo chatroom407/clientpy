@@ -1,4 +1,4 @@
-class Client:
+class ClientAuth:
     def __init__(self, addr=None, port=None, login=None, password=None):
         self._addr = addr
         self._port = port
