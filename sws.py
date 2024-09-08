@@ -56,38 +56,48 @@ async def process_message(message):
 async def connect_and_listen(uri):
     async with websockets.connect(uri) as websocket:
         print("Connected")
-
-        async def handle_messages():
-            while True:
-                try:
-                    message = await websocket.recv()
-                    print("Received message:", message)
-                    response_to_send = await process_message(message)
-                    if response_to_send:
-                        await websocket.send(response_to_send)
-                        print("Sent response:", response_to_send)
-                except websockets.ConnectionClosedError as e:
-                    print(f"WebSocket connection closed with error: {e}")
-                    # Optionally, you could attempt to reconnect here if needed
-
-        asyncio.create_task(handle_messages())
-
+        message = await websocket.recv()
+        await process_message(message)
         await clients(websocket)
+        message = await websocket.recv()
+        await process_message(message)
 
-        if not global_ids:
-            print("No client IDs found.")
-            return
-
+        print(len(global_ids))
         for client_id in global_ids:
             await pls_key(client_id, websocket)
 
-        print("Length of global_ids:", len(global_ids))
-        print("Length of global_pub_keys:", len(global_pub_keys))
 
-        print("Public keys:")
-        for pub_key in global_pub_keys:
-            print(pub_key) 
+            ##message = await websocket.recv()
+            #await process_message(message)
 
+def encrypt_message(id, mid, message):
+    try:
+        index = global_ids.index(mid)  
+        pubKey = global_pub_keys[index]  # Get the corresponding public key
+    except ValueError:
+        raise Exception(f"User ID {mid} not found in global_ids")
+
+    public_key = serialization.load_pem_public_key(pubKey.encode('utf-8'))
+    encrypted_message = public_key.encrypt(
+        message.encode('utf-8'),
+        padding.OAEP(
+            mgf=padding.MGF1(algorithm=hashes.SHA256()),
+            algorithm=hashes.SHA256(),
+            label=None
+        )
+    )
+
+    tb = "<tb>"
+    tb += "<instance>send</instance>"
+    tb += f"<id>{id}</id>"
+    tb += f"<msg>{encrypted_message.hex()}</msg>"  # Convert encrypted bytes to hex
+    tb += f"<mid>{mid}</mid>"
+    tb += "</tb>"
+
+    return tb
+
+async def send_message(tb_message, websocket_url):
+    await websocket.send(tb_message)
 
 def decrypt_message(encrypted_msg):
     return encrypted_msg
@@ -99,12 +109,10 @@ async def clients(websocket):
     tb += "<msg></msg>"
     tb += "<mid></mid>"
     tb += "</tb>"
-    
-    # Wysłanie wiadomości przez WebSocket
     await websocket.send(tb)
+    
 
 async def pls_key(client_id, websocket):
-    print("PLS_KEY")
     tb = "<tb>"
     tb += "<instance>pls_key</instance>"
     tb += f"<id>{client_id}</id>"

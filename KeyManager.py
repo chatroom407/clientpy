@@ -42,7 +42,7 @@ class KeyManager:
 
             encoded_public_key = urllib.parse.quote(base64.b64encode(self.public_key_pem).decode())
 
-            response = requests.get(f"http://{url}/room407/server/deliveryKey.php?pk={encoded_public_key}")
+            response = requests.get(f"http://{url}/room407/deliveryKey.php?pk={encoded_public_key}")
 
             if response.status_code != 200:
                 raise Exception(f"Błąd: {response.status_code}")

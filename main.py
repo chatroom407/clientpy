@@ -2,7 +2,8 @@
 from KeyManager import *
 from encrypt import *
 from ClientAuth import *
-from ws import *
+#from aws import *
+from aws import *
 
 url = "193.93.89.68"
 keyMenager = KeyManager()
