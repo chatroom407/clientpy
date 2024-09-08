@@ -70,57 +70,48 @@ async def monitor_global_new_clients():
 
 async def connect_and_listen(uri):
     connFlag = 0    
-    while True:  # Loop to handle reconnection        
-        try:
-            async with websockets.connect(uri) as websocket:
-                print("Connected")
-                
-                # Start a background task to handle messages
-                async def handle_messages():
-                    nonlocal connFlag
-                    while True:
-                        try:
-                            message = await websocket.recv()
-                            print("Received message:", message)
-                            response_to_send = await process_message(message)
-                            if response_to_send:
-                                await websocket.send(response_to_send)
-                                print("Sent response:", response_to_send)
-                        except websockets.ConnectionClosed:
-                            print("WebSocket connection closed.")
-                            connFlag = 1
-                            break  # Exit loop and reconnect
-                        except Exception as e:
-                            print(f"Error in message handling: {e}")
-                            break
-
-                # Start message handling in the background
-                asyncio.create_task(handle_messages())
-
-                # Perform your client logic (Ensure these are non-blocking)
-                await clients(websocket)
-                await monitor_global_new_clients()
-
-                if not global_ids:
-                    print("---No client IDs found---")
-                else:
-                    print("---Clients download---")
-
-                for mid in global_ids:
-                    await pls_key(mid, websocket)
-
-                # Send periodic messages
-                while True and  connFlag != 1:
-                    message = await encrypt_message(global_myId, global_ids[0], "TestMessage")
-                    await websocket.send(message)
-                    await asyncio.sleep(1)
+    async with websockets.connect(uri) as websocket:
+        print("Connected")
         
-        except (websockets.ConnectionClosed, ConnectionRefusedError) as e:
-            print(f"Connection error: {e}, retrying in 2 seconds...")
-            await asyncio.sleep(2)  # Wait before attempting reconnection
-        except Exception as e:
-            print(f"Unexpected error: {e}")
-            break 
+        # Start a background task to handle messages
+        async def handle_messages():
+            nonlocal connFlag
+            while True:
+                try:
+                    message = await websocket.recv()
+                    print("Received message:", message)
+                    response_to_send = await process_message(message)
+                    if response_to_send:
+                        await websocket.send(response_to_send)
+                        print("Sent response:", response_to_send)
+                except websockets.ConnectionClosed:
+                    print("WebSocket connection closed.")
+                    connFlag = 1
+                    break  # Exit loop and reconnect
+                except Exception as e:
+                    print(f"Error in message handling: {e}")
+                    break
+
+        # Start message handling in the background
+        asyncio.create_task(handle_messages())
+
+        # Perform your client logic (Ensure these are non-blocking)
+        await clients(websocket)
+        await monitor_global_new_clients()
+
+        if not global_ids:
+            print("---No client IDs found---")
+        else:
+            print("---Clients download---")
+
+        for mid in global_ids:
+            await pls_key(mid, websocket)
+
+        # Send periodic messages
+        while True and  connFlag != 1:
+            message = await encrypt_message(global_myId, global_ids[0], "TestMessage")
+            await websocket.send(message)
+            await asyncio.sleep(1)
 
 def encrypt_message(id, mid, message):
     try:
