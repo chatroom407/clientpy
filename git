@@ -24,3 +24,7 @@ git push -u origin main
 git add .
 git commit -m "reconnect loop"
 git push -u origin main
+
+git add .
+git commit -m "bug pls key dead"
+git push -u origin main
