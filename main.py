@@ -3,6 +3,7 @@ from KeyManager import *
 from encrypt import *
 from ClientAuth import *
 from aws import *
+import time
 
 async def loop():
     while True:
@@ -42,7 +43,9 @@ async def loop():
         ws = f"ws://{url}:{port}?room={password_encrypted}&session={session}&login={login_encrypted}"
 
         print("Generated ws URL:", ws)
+        print()
         #asyncio.get_event_loop().run_until_complete(connect_and_send(ws))
         await connect_and_listen(ws)
+        time.sleep(1)
 
 asyncio.run(loop())

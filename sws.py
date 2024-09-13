@@ -64,7 +64,13 @@ async def connect_and_listen(uri):
 
         print(len(global_ids))
         for client_id in global_ids:
-            await pls_key(client_id, websocket)
+            await pls_key("abcd", websocket)
+            
+            try:
+                message = await asyncio.wait_for(websocket.recv(), timeout=2.0)  # Limit do 5 sekund
+                await process_message(message)
+            except asyncio.TimeoutError:
+                print(f"Timeout for client_id: {client_id}")
 
 
             ##message = await websocket.recv()

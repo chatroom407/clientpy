@@ -2,6 +2,7 @@ import asyncio
 import websockets
 import xml.etree.ElementTree as ET
 import time
+import traceback
 
 connFlag = 0   
 global_myId = 'main'
@@ -16,7 +17,8 @@ async def process_message(message):
     root = ET.fromstring(message)
     
     instance = root.find('instance').text
-    print("INSTANCE: " + instance)
+    print("Message:" + message)
+    print("INSTANCE: " + instance)    
 
     if instance == "you":
         my_id = root.find('id').text
@@ -44,7 +46,8 @@ async def process_message(message):
 
         for index, global_client_id in enumerate(global_ids):
             if global_client_id == reciver_client_id:
-                global_pub_keys[index] = reciver_pub_key
+                if 0 <= index < len(global_pub_keys):
+                    global_pub_keys[index] = reciver_pub_key
                 break
 
     elif instance == "send":
@@ -71,7 +74,7 @@ async def monitor_global_new_clients():
         await asyncio.sleep(1)
 
 
-async def monitor_global_public_key():
+async def monitor_global_public_key(websocket):
     global global_ids
     global global_pub_keys
     global connFlag
@@ -79,7 +82,10 @@ async def monitor_global_public_key():
     prev_length = len(global_pub_keys)  
 
     while True:
-        print(global_pub_keys)
+        #print(global_pub_keys)
+        #for mid in global_ids:
+            #await pls_key(mid, websocket)
+
         if global_pub_keys:
             if len(global_pub_keys) > prev_length:
                 print(f"New public key added: {global_pub_keys[-1]}")  
@@ -96,43 +102,55 @@ async def monitor_global_public_key():
 
 
 async def connect_and_listen(uri):
-    global connFlag 
+    global connFlag
+    connFlag = 0  
     async with websockets.connect(uri) as websocket:
-        print("Connected")
+        print("Try connected")
         
         async def handle_messages():
             global connFlag
             while True:
                 try:
+                    #message = await asyncio.wait_for(websocket.recv(), timeout=1)
                     message = await websocket.recv()
                     print("Received message:", message)
                     response_to_send = await process_message(message)
                     if response_to_send:
                         await websocket.send(response_to_send)
                         print("Sent response:", response_to_send)
+                    print()
                 except websockets.ConnectionClosed:
                     print("WebSocket connection closed.")
                     connFlag = 1
                     break  
                 except Exception as e:
                     print(f"Error in message handling: {e}")
-                    break
+                    traceback.print_exc()
+                    #break
 
         asyncio.create_task(handle_messages())
 
-        await clients(websocket)
-        await monitor_global_new_clients()
+        if connFlag != 1:
+            print("")
+            print("-Get-Clients-")
+            await clients(websocket)
+            await monitor_global_new_clients()
+                  
+            print("")
+            print("-Wait-for-keys-")
+            if not global_ids:
+                print("---No client IDs found---")
+            else:
+                print("---Clients download---")
 
-        if not global_ids:
-            print("---No client IDs found---")
-        else:
-            print("---Clients download---")
+            for mid in global_ids:
+                await pls_key(mid, websocket)
+              
+        await monitor_global_public_key(websocket)
 
-        for mid in global_ids:
-            await pls_key(mid, websocket)
-
-        await monitor_global_public_key()
-        print("Public_key_Load")
+        if connFlag != 1:
+            print("-Public_key_Load-")
+            print()
 
         while True and  connFlag != 1:
             message = await encrypt_message(global_myId, global_ids[0], "TestMessage")
