@@ -62,45 +62,6 @@ async def process_message(message):
     else:
         print(message)
 
-
-async def monitor_global_new_clients():
-    global global_new_clients
-    global connFlag
-    while True:
-        if connFlag == 1:
-            break
-        if global_new_clients >= 1:
-            break
-        await asyncio.sleep(1)
-
-
-async def monitor_global_public_key(websocket):
-    global global_ids
-    global global_pub_keys
-    global connFlag
-    
-    prev_length = len(global_pub_keys)  
-
-    while True:
-        #print(global_pub_keys)
-        #for mid in global_ids:
-            #await pls_key(mid, websocket)
-
-        if global_pub_keys:
-            if len(global_pub_keys) > prev_length:
-                print(f"New public key added: {global_pub_keys[-1]}")  
-                prev_length = len(global_pub_keys)
-
-        if connFlag == 1:
-            break
-        
-        if len(global_ids) == len(global_pub_keys):
-            print("Number of initialized elements matches the number of public keys.")
-            break
-        
-        await asyncio.sleep(1)
-
-
 async def connect_and_listen(uri):
     global connFlag
     connFlag = 0  

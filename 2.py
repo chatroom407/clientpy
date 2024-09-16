@@ -32,7 +32,7 @@ async def loop():
             print("Błąd odszyfrowania:", e)
             exit()
 
-        client_auth = ClientAuth.from_auth_file('auth')
+        client_auth = ClientAuth.from_auth_file('auth2')
         password = client_auth.get_password()
         login = client_auth.get_login()
 
@@ -51,7 +51,7 @@ async def loop():
         
         #asyncio.get_event_loop().run_until_complete(connect_and_send(ws))
 
-        aws = Aws("main")
+        aws = Aws("main2")
         await aws.connect_and_listen(ws)
         time.sleep(1)
 
