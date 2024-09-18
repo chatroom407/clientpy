@@ -12,8 +12,12 @@ from Aws import *
 from AwsRequest import AwsRequest
 from Monitor import *
 
+def loggCleaner():
+    pass
+
 async def loop():
     while True:
+        loggCleaner()
         url = "193.93.89.68"
         keyMenager = KeyManager()
         server_response = keyMenager.get_server_key(url)

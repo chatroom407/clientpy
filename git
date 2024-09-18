@@ -36,3 +36,7 @@ git push -u origin main
 git add .
 git commit -m "Class struct share var"
 git push -u origin main
+
+git add .
+git commit -m "Make loggs and prepare to send Messages"
+git push -u origin main

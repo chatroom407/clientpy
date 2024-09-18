@@ -3,6 +3,7 @@ import websockets
 import xml.etree.ElementTree as ET
 import time
 import traceback
+import xml.dom.minidom
 
 class AwsRequest:
     def __init__(self, aws):
@@ -42,6 +43,7 @@ class AwsRequest:
         return tb
 
     def decrypt_message(self, encrypted_msg):
+        
         return encrypted_msg
 
     async def clients(self, websocket):
@@ -61,6 +63,10 @@ class AwsRequest:
         tb += f"<id>{client_id}</id>"
         tb += "<msg></msg>"
         tb += f"<mid>{self.aws.global_myId}</mid>"
-        tb += "</tb>"
-        print(tb)
+        tb += "</tb>"                
+        
+        xml_str = xml.dom.minidom.parseString(tb).toprettyxml(indent="  ")
+        print(xml_str)
+        with open("loggs/send/pls_key", "a") as file:
+            file.write(xml_str)
         await websocket.send(tb) 
