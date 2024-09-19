@@ -24,6 +24,9 @@ class Aws:
         self.aws_request = AwsRequest(self)
         self.monitor = Monitor(self)
 
+    def findClient():
+        pass
+
     async def process_message(self, message):
         root = ET.fromstring(message)
         
@@ -72,12 +75,12 @@ class Aws:
 
             flag = 0
             for index, (client_id, _) in enumerate(self.global_pub_keys):
-                if client_id == reciver_client_id:
+                if client_id == reciver_client_id and self.global_myId != reciver_client_id:
                     self.global_pub_keys[index] = [reciver_client_id, reciver_pub_key]
                     flag = 1
                     break
 
-            if flag == 0:
+            if flag == 0 and self.global_myId != reciver_client_id:
                 self.global_pub_keys.append([reciver_client_id, reciver_pub_key])
 
         elif instance == "send":
@@ -132,10 +135,9 @@ class Aws:
                 
             await self.monitor.monitor_global_public_key(websocket)
 
-            print("ABCD!")
             while True and self.connFlag != 1:
                 print("Send")                
-                message = await self.aws_request.encrypt_message(self.global_pub_keys[0], self.global_myId, self.global_pub_keys[1], "TestMessage")
+                message = self.aws_request.encrypt_message(self.global_pub_keys[0][1], self.global_pub_keys[0][0], self.global_myId, "TestMessage")
                 await websocket.send(message)
                 await asyncio.sleep(1)
 

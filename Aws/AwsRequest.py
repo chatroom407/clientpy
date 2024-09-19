@@ -5,40 +5,32 @@ import time
 import traceback
 import xml.dom.minidom
 
+import base64
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.primitives import hashes
+
 class AwsRequest:
     def __init__(self, aws):
         self.aws = aws
         
-    def encrypt_message(self, id, mid, message):
-        try:
-            print(mid)
-            index = self.aws.global_ids.index(mid)
-            print(self.aws.global_ids)
-            print()
-            print(index)  
-            print()
-            pubKey = self.aws.global_pub_keys[index]          
-            print(self.aws.global_pub_keys)
-        except ValueError:
-            raise Exception(f"User ID {mid} not found in global_ids")
-
-        public_key = serialization.load_pem_public_key(pubKey.encode('utf-8'))
-
+    def encrypt_message(self, pub_key_pem, recipient_username, sender_id, message):
+        public_key = serialization.load_pem_public_key(pub_key_pem.encode('utf-8'))
         encrypted_message = public_key.encrypt(
             message.encode('utf-8'),
-            padding.OAEP(
-                mgf=padding.MGF1(algorithm=hashes.SHA256()),
-                algorithm=hashes.SHA256(),
-                label=None
-            )
+            padding.PKCS1v15()  
         )
+
+        encrypted_message_b64 = base64.b64encode(encrypted_message).decode('utf-8')
 
         tb = "<tb>"
         tb += "<instance>send</instance>"
-        tb += f"<id>{id}</id>"
-        tb += f"<msg>{encrypted_message.hex()}</msg>"  
-        tb += f"<mid>{mid}</mid>"
+        tb += f"<id>{recipient_username}</id>"
+        tb += f"<msg>{encrypted_message_b64}</msg>" 
+        tb += f"<mid>{sender_id}</mid>"
         tb += "</tb>"
+
+        print(tb)
 
         return tb
 

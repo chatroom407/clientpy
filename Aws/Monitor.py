@@ -31,6 +31,7 @@ class Monitor:
                 if len(self.aws_instance.global_pub_keys) > prev_length:
                     print(f"New public key added: {self.aws_instance.global_pub_keys[-1]}")  
                     prev_length = len(self.aws_instance.global_pub_keys)
+                    break
 
             if self.aws_instance.connFlag == 1:
                 break
