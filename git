@@ -44,3 +44,7 @@ git push -u origin main
 git add .
 git commit -m "Send message to clienJs"
 git push -u origin main
+
+git add .
+git commit -m "Client Up"
+git push -u origin main

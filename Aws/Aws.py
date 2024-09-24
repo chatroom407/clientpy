@@ -15,7 +15,7 @@ from Monitor import *
 #global_new_clients = 0
 
 class Aws:    
-    def __init__(self, myId):
+    def __init__(self, myId, keyMenager):
         self.connFlag = 0   
         self.global_myId = myId
         self.global_ids  = []
@@ -23,6 +23,7 @@ class Aws:
         self.global_new_clients = 0    
         self.aws_request = AwsRequest(self)
         self.monitor = Monitor(self)
+        self.keyMenager = keyMenager
 
     def findClient():
         pass
@@ -44,12 +45,14 @@ class Aws:
                     print(f'Tag: {elem.tag}, Zawartość: {elem.text}')
                     self.global_ids.append(elem.text)
             self.global_new_clients += 1    
-
+ 
         elif instance == "pls":
             client_id = root.find('mid').text
-            my_pub_key = self.global_myId
+            my_pub_key = self.keyMenager.public_key_pem.decode('utf-8')
+
             #print("pls:", client_id)
-            tb = f"<tb><instance>key</instance><id>{client_id}</id><msg>{my_pub_key}</msg><mid>{client_id}</mid></tb>"
+            
+            tb = f"<tb><instance>key</instance><id>{client_id}</id><msg>{my_pub_key}</msg><mid>{self.global_myId}</mid></tb>"
 
             xml_str = xml.dom.minidom.parseString(message).toprettyxml(indent="  ")
             print(xml_str)
@@ -87,16 +90,17 @@ class Aws:
             print("(send):", message)
 
         elif instance == "msg":
+            print("(msg):", message)
             id_elem = root.find('id').text
             msg = root.find('msg').text
-            mid = root.find('mid').text
-            print("(msg):", message)
+            #mid = root.find('mid').text  
+            decrypted_text = self.aws_request.decrypt_message(msg)          
             print(decrypted_text)
         
         else:
             print(message)
 
-    async def connect_and_listen(self, uri):    
+    async def connect_and_listen(self, uri, counterUser):    
         self.connFlag = 0  
         async with websockets.connect(uri) as websocket:
             print("Try connected")
@@ -136,8 +140,11 @@ class Aws:
             await self.monitor.monitor_global_public_key(websocket)
 
             while True and self.connFlag != 1:
-                print("Send")                
-                message = self.aws_request.encrypt_message(self.global_pub_keys[0][1], self.global_pub_keys[0][0], self.global_myId, "TestMessage")
-                await websocket.send(message)
+                print("Send")
+                #print(self.global_pub_keys)
+                for gpk in self.global_pub_keys:
+                    message = self.aws_request.encrypt_message(gpk[1], gpk[0], self.global_myId, "TestMessage")
+                    await websocket.send(message)
+
                 await asyncio.sleep(1)
 

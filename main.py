@@ -16,6 +16,7 @@ def loggCleaner():
     pass
 
 async def loop():
+    counterUser = 0
     while True:
         loggCleaner()
         url = "193.93.89.68"
@@ -38,7 +39,8 @@ async def loop():
 
         client_auth = ClientAuth.from_auth_file('auth')
         password = client_auth.get_password()
-        login = client_auth.get_login()
+        client_auth.set_login( client_auth.get_login() + str(counterUser) )
+        login = client_auth.get_login() 
 
         print(password)
         print(login)
@@ -55,8 +57,9 @@ async def loop():
         
         #asyncio.get_event_loop().run_until_complete(connect_and_send(ws))
 
-        aws = Aws("main")
-        await aws.connect_and_listen(ws)
+        aws = Aws("main" + str(counterUser), keyMenager)
+        await aws.connect_and_listen(ws, counterUser)
+        counterUser += 1
         time.sleep(1)
 
 asyncio.run(loop())

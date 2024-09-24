@@ -9,6 +9,7 @@ import base64
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.backends import default_backend
 
 class AwsRequest:
     def __init__(self, aws):
@@ -35,8 +36,21 @@ class AwsRequest:
         return tb
 
     def decrypt_message(self, encrypted_msg):
-        
-        return encrypted_msg
+        private_key = serialization.load_pem_private_key(
+            self.aws.keyMenager.private_key_pem,  
+            password=None,  
+            backend=default_backend() 
+        )
+
+        if isinstance(encrypted_msg, str):
+            encrypted_msg = base64.b64decode(encrypted_msg)  
+
+        decrypted_message = private_key.decrypt(
+            encrypted_msg,  
+            padding.PKCS1v15()  
+        )
+
+        return decrypted_message
 
     async def clients(self, websocket):
         print("#CLIENTS#")
